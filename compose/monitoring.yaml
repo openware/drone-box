@@ -1,0 +1,47 @@
+version: '3.6'
+
+services:
+  prometheus:
+    restart: always
+    image: prom/prometheus:v2.14.0
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.external-url=https://prometheus.openware.work
+    volumes:
+      - ../config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ../config/alert.rules:/etc/prometheus/alert.rules
+      - prometheus_data:/prometheus
+    labels:
+      - "traefik.http.routers.prometheus-monitoring.rule=Host(`prometheus.openware.work`) && PathPrefix(`/`)"
+      - "traefik.enable=true"
+      - "traefik.http.routers.prometheus-monitoring.middlewares=auth"
+      - "traefik.http.middlewares.auth.basicauth.users=openware-admin:$$apr1$$unpMSz3e$$ue7UciDr4yGU4eriSPJCr1"
+      - "traefik.http.services.prometheus-monitoring.loadbalancer.server.port=9090"
+      - "traefik.http.routers.prometheus-monitoring.entrypoints=websecure"
+      - "traefik.http.routers.prometheus-monitoring.tls=true"
+
+  node_exporter:
+    image: prom/node-exporter:v0.18.1
+    container_name: node_exporter
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)'
+
+  cadvisor:
+    image: gcr.io/google-containers/cadvisor:v0.34.0
+    container_name: cadvisor
+    volumes:
+      - /var/run:/var/run:rw
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /:/rootfs:ro
+      - /sys:/sys:ro
+
+volumes:
+  prometheus_data:
