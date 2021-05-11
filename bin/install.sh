@@ -7,7 +7,7 @@ COMPOSE_URL="https://github.com/docker/compose/releases/download/$COMPOSE_VERSIO
 install_core() {
   sudo bash <<EOS
 apt-get update
-apt-get install -y -q git tmux gnupg2 dirmngr dbus htop curl libmariadbclient-dev-compat build-essential
+apt-get install -y -q git tmux dbus htop curl build-essential
 EOS
 }
 
@@ -35,12 +35,6 @@ chmod +x /usr/local/bin/docker-compose
 EOS
 }
 
-activate_gcloud() {
-  sudo -u deploy bash <<EOS
-  gcloud auth configure-docker --quiet
-EOS
-}
-
 deploy() {
   sudo -u deploy bash <<EOS
   cd /home/deploy/platform
@@ -53,5 +47,4 @@ EOS
 install_core
 log_rotation
 install_docker
-activate_gcloud
 deploy
